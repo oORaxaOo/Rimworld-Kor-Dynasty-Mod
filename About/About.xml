@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ModMetaData>
+  <name>KOR: DYNASTIE</name>
+  <author>oORaxaOo</author>
+  <packageId>oORaxaOo.KORDynastie</packageId>
+  <supportedVersions>
+    <li>1.6</li>
+    <li>1.7</li>
+  </supportedVersions>
+  <description>
+A RimWorld faction and colony project focused on the Kor Dynasty: a resilient, technologically advanced society with persistent world presence, diplomacy, trade, and long-term strategic goals.
+
+Development build. Compatibility with each listed game version must be confirmed through in-game testing.
+  </description>
+</ModMetaData>
