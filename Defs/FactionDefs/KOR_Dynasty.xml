@@ -13,6 +13,10 @@
     <pawnSingular>Kor</pawnSingular>
     <leaderTitle>Dynasty Speaker</leaderTitle>
     <techLevel>Spacer</techLevel>
+    <settlementGenerationWeight>0.75</settlementGenerationWeight>
+    <requiredCountAtGameStart>1</requiredCountAtGameStart>
+    <maxCountAtGameStart>2</maxCountAtGameStart>
+    <settlementTexturePath>World/WorldObjects/DefaultSettlement</settlementTexturePath>
     <colorSpectrum>
       <li>(0.68, 0.08, 0.12)</li>
       <li>(0.10, 0.10, 0.12)</li>

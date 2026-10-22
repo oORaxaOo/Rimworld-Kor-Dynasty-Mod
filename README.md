@@ -22,16 +22,20 @@ RimWorld 1.7 was announced for the unstable beta branch on 12 October 2026. The 
 
 ## Repository status
 
-This repository began as a minimal scaffold. The development branch adds metadata, an initial faction definition, project notes and automated XML validation. This is **not yet a tested in-game release**. The first faction definition inherits a vanilla civil-faction template as a temporary baseline; original settlement profiles, colony start, art, diplomacy and strategic simulation remain future work.
+The mod now has metadata, a Kor faction definition inheriting the vanilla OutlanderCivil baseline, English/German faction text, reproducible development packaging, and automated checks for XML, localization, and basic world-generation settings. The faction is configured to be eligible for world generation and uses the vanilla default settlement texture. This is **not yet a tested in-game release**. Original Kor pawn kinds, a distinct settlement/trade profile, the playable colony start, art, diplomacy and strategic simulation remain future work.
 
 ## Milestones
 
 - [x] Establish project metadata and target versions.
 - [x] Add a first faction definition using a vanilla template as a temporary baseline.
-- [x] Add repository-level XML validation.
+- [x] Add repository-level XML validation and regression tests.
+- [x] Configure baseline world-generation presence and verify required fields statically.
+- [x] Add English/German faction localization.
+- [x] Build reproducible development ZIPs in CI.
 - [ ] Verify the faction in RimWorld 1.7.
 - [ ] Verify compatibility in RimWorld 1.6.
 - [ ] Add original faction icon and visual identity.
+- [ ] Add original Kor pawn kinds and wire them into faction groups.
 - [ ] Add a playable start scenario.
 - [ ] Add distinct Kor settlement and trade profiles.
 - [ ] Add world events, diplomacy and persistent strategic goals.
