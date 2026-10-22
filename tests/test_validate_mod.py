@@ -1,6 +1,7 @@
 """Regression tests for mod validation and clean package generation."""
 
 import importlib.util
+import shutil
 import tempfile
 import unittest
 from pathlib import Path
@@ -214,6 +215,71 @@ class ValidateModTests(unittest.TestCase):
             path = root / "Languages" / "English" / "DefInjected" / "FactionDef" / "KOR_Dynasty.xml"
             path.write_text("<LanguageData><KOR_Dynasty.label> </KOR_Dynasty.label></LanguageData>", encoding="utf-8")
             self.assertTrue(any("must not be empty" in e for e in VALIDATOR.validate(root)))
+
+
+class ColonyStartContractTests(unittest.TestCase):
+    def copy_repository(self, destination: Path) -> Path:
+        target = destination / "mod"
+        shutil.copytree(
+            VALIDATOR.ROOT,
+            target,
+            ignore=shutil.ignore_patterns(".git", "dist", "__pycache__"),
+        )
+        return target
+
+    def test_repository_colony_start_contract_passes(self):
+        self.assertEqual(VALIDATOR.validate(VALIDATOR.ROOT), [])
+
+    def test_changed_starting_supply_count_is_reported(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = self.copy_repository(Path(directory))
+            scenario = root / "Defs" / "ScenarioDefs" / "KOR_ColonyStart.xml"
+            scenario.write_text(
+                scenario.read_text(encoding="utf-8").replace(
+                    "<count>30</count>", "<count>29</count>", 1
+                ),
+                encoding="utf-8",
+            )
+            self.assertTrue(any(
+                "starting supplies must match the required item/count contract" in error
+                for error in VALIDATOR.validate(root)
+            ))
+
+    def test_changed_arrival_method_is_reported(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = self.copy_repository(Path(directory))
+            scenario = root / "Defs" / "ScenarioDefs" / "KOR_ColonyStart.xml"
+            scenario.write_text(
+                scenario.read_text(encoding="utf-8").replace(
+                    "<method>Standing</method>", "<method>Unknown</method>", 1
+                ),
+                encoding="utf-8",
+            )
+            self.assertTrue(any(
+                "exactly one player arrival part with method Standing is required" in error
+                for error in VALIDATOR.validate(root)
+            ))
+
+    def test_missing_starting_supply_is_reported(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = self.copy_repository(Path(directory))
+            scenario = root / "Defs" / "ScenarioDefs" / "KOR_ColonyStart.xml"
+            scenario.write_text(
+                scenario.read_text(encoding="utf-8").replace(
+                    "        <li Class=\"ScenPart_StartingThing_Defined\">\n"
+                    "          <def>StartingThing_Defined</def>\n"
+                    "          <thingDef>Steel</thingDef>\n"
+                    "          <count>600</count>\n"
+                    "        </li>\n",
+                    "",
+                    1,
+                ),
+                encoding="utf-8",
+            )
+            self.assertTrue(any(
+                "starting supplies must match the required item/count contract" in error
+                for error in VALIDATOR.validate(root)
+            ))
 
 
 class PackageModTests(unittest.TestCase):

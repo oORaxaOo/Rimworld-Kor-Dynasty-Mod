@@ -66,6 +66,14 @@ def package_mod(root: Path = ROOT, output: Path | None = None) -> Path:
             raise RuntimeError("Package verification failed: Kor pawn-kind Def missing.")
         if f"{MOD_FOLDER_NAME}/Defs/ScenarioDefs/KOR_ColonyStart.xml" not in names:
             raise RuntimeError("Package verification failed: Kor colony scenario missing.")
+        for language in ("English", "German"):
+            translation_path = (
+                f"{MOD_FOLDER_NAME}/Languages/{language}/DefInjected/ScenarioDef/KOR_ColonyStart.xml"
+            )
+            if translation_path not in names:
+                raise RuntimeError(
+                    f"Package verification failed: {language} Kor scenario translations missing."
+                )
         unexpected = [
             name for name in names
             if not name.startswith(f"{MOD_FOLDER_NAME}/")

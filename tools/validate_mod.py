@@ -33,6 +33,14 @@ REQUIRED_SCENARIO_TRANSLATIONS = {
     "KOR_ColonyStart.scenario.summary",
     "KOR_ColonyStart.scenario.description",
 }
+REQUIRED_STARTING_THINGS = {
+    "MealSurvivalPack": 30,
+    "MedicineHerbal": 10,
+    "WoodLog": 500,
+    "Steel": 600,
+    "ComponentIndustrial": 20,
+    "Silver": 300,
+}
 REQUIRED_WORLD_PRESENCE_FIELDS = (
     "settlementGenerationWeight",
     "requiredCountAtGameStart",
@@ -204,6 +212,28 @@ def validate(root: Path = ROOT) -> list[str]:
             errors.append("KOR_ColonyStart.xml: KOR_Resident must be required at start.")
         if not pawn_parts or any(not part.findall("./kindCounts/li") for part in pawn_parts):
             errors.append("KOR_ColonyStart.xml: starting pawn configuration must contain kindCounts.")
+
+        arrival_parts = scenario.findall("./scenario/parts/li[@Class='ScenPart_PlayerPawnsArriveMethod']")
+        if len(arrival_parts) != 1 or arrival_parts[0].findtext("method") != "Standing":
+            errors.append("KOR_ColonyStart.xml: exactly one player arrival part with method Standing is required.")
+
+        starting_things: dict[str, int] = {}
+        for part in scenario.findall("./scenario/parts/li[@Class='ScenPart_StartingThing_Defined']"):
+            thing_def = (part.findtext("thingDef") or "").strip()
+            try:
+                count = int(part.findtext("count") or "")
+            except ValueError:
+                errors.append(f"KOR_ColonyStart.xml: starting item {thing_def or '<unknown>'!r} must have an integer count.")
+                continue
+            if not thing_def or count <= 0:
+                errors.append("KOR_ColonyStart.xml: starting items must have a thingDef and a positive count.")
+                continue
+            starting_things[thing_def] = starting_things.get(thing_def, 0) + count
+        if starting_things != REQUIRED_STARTING_THINGS:
+            errors.append(
+                "KOR_ColonyStart.xml: starting supplies must match the required item/count contract "
+                f"{REQUIRED_STARTING_THINGS}; got {starting_things}."
+            )
 
     for language in sorted(REQUIRED_LANGUAGES):
         translation_path = (

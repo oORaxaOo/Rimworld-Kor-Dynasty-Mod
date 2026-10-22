@@ -51,7 +51,7 @@ Run with Python 3:
 python3 tools/validate_mod.py
 ```
 
-This checks XML well-formedness, metadata, faction-to-pawn references and English/German text. It does **not** replace loading the mod in RimWorld. Runtime compatibility must be verified against the actual game build before release.
+This checks XML well-formedness, metadata, faction-to-pawn references, the colony-start roster, arrival method, required starting supplies, package contents, and English/German text. It does **not** replace loading the mod in RimWorld. Runtime compatibility must be verified against the actual game build before release.
 
 ## Local testing
 
