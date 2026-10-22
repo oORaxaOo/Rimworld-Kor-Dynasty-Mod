@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Static integration checks for KOR: DYNASTIE XML and mod metadata.
+"""Static integration checks for KOR: DYNASTIE XML, metadata and translations.
 
 These checks catch repository-level integration mistakes. They do not replace
 loading the mod in the target RimWorld build.
@@ -16,6 +16,14 @@ EXPECTED_METADATA = {
     "name": "KOR: DYNASTIE",
     "packageId": "oORaxaOo.KORDynastie",
 }
+REQUIRED_FACTION_TRANSLATIONS = {
+    "KOR_Dynasty.label",
+    "KOR_Dynasty.description",
+    "KOR_Dynasty.pawnSingular",
+    "KOR_Dynasty.pawnsPlural",
+    "KOR_Dynasty.leaderTitle",
+}
+REQUIRED_LANGUAGES = {"English", "German"}
 
 
 def validate(root: Path = ROOT) -> list[str]:
@@ -100,6 +108,29 @@ def validate(root: Path = ROOT) -> list[str]:
             elif len(colors) < 3:
                 errors.append("KOR_Dynasty.xml: Kor palette should include red, charcoal, and gold entries.")
 
+    for language in sorted(REQUIRED_LANGUAGES):
+        translation_path = (
+            root / "Languages" / language / "DefInjected" / "FactionDef" / "KOR_Dynasty.xml"
+        )
+        translation_root = parsed_roots.get(translation_path)
+        relative = translation_path.relative_to(root).as_posix()
+        if translation_root is None:
+            errors.append(f"Missing or invalid faction translations: {relative}.")
+            continue
+        if translation_root.tag != "LanguageData":
+            errors.append(f"{relative}: translation file must have a <LanguageData> root.")
+            continue
+        translated_keys: set[str] = set()
+        for node in list(translation_root):
+            key = node.tag
+            if key in translated_keys:
+                errors.append(f"{relative}: duplicate translation key {key!r}.")
+            translated_keys.add(key)
+            if not (node.text or "").strip():
+                errors.append(f"{relative}: translation {key!r} must not be empty.")
+        for required_key in sorted(REQUIRED_FACTION_TRANSLATIONS - translated_keys):
+            errors.append(f"{relative}: missing translation key {required_key!r}.")
+
     return errors
 
 
@@ -113,7 +144,7 @@ def main() -> int:
 
     xml_count = len(list(ROOT.rglob("*.xml")))
     print(f"KOR: DYNASTIE validation passed ({xml_count} XML files parsed).")
-    print("Duplicate DefNames, Defs roots, faction identity, and palette checked.")
+    print("Duplicate DefNames, Defs roots, faction identity, palette and English/German translations checked.")
     print("Note: static validation does not test RimWorld runtime compatibility.")
     return 0
 
