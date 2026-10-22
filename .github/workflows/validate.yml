@@ -19,3 +19,5 @@ jobs:
           python-version: "3.x"
       - name: Validate mod XML and metadata
         run: python3 tools/validate_mod.py
+      - name: Run validator regression tests
+        run: python3 -m unittest discover -s tests -v
