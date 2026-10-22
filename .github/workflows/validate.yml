@@ -16,8 +16,17 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.x"
+          python-version: "3.12"
       - name: Validate mod XML and metadata
         run: python3 tools/validate_mod.py
-      - name: Run validator regression tests
+      - name: Run validator and packaging regression tests
         run: python3 -m unittest discover -s tests -v
+      - name: Build and verify installable mod package
+        run: python3 tools/package_mod.py --output dist/KOR-DYNASTIE-dev.zip
+      - name: Upload mod package
+        uses: actions/upload-artifact@v4
+        with:
+          name: KOR-DYNASTIE-development-build
+          path: dist/KOR-DYNASTIE-dev.zip
+          if-no-files-found: error
+          retention-days: 14
