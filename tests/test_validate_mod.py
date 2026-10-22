@@ -81,6 +81,8 @@ def make_minimal_mod(root: Path) -> None:
         "KOR_Dynasty.pawnSingular": "Kor",
         "KOR_Dynasty.pawnsPlural": "Kor",
         "KOR_Dynasty.leaderTitle": "Dynasty Speaker",
+        "KOR_PlayerFaction.label": "Kor Dynasty",
+        "KOR_PlayerFaction.description": "Test player faction description",
     }
     for language in ("English", "German"):
         pawn_folder = root / "Languages" / language / "DefInjected" / "PawnKindDef"
@@ -200,6 +202,22 @@ class ValidateModTests(unittest.TestCase):
                 "<basicMemberKind>KOR_Resident</basicMemberKind>", ""
             ), encoding="utf-8")
             self.assertTrue(any("basicMemberKind must reference KOR_Resident" in e for e in VALIDATOR.validate(root)))
+
+    def test_missing_player_faction_translation_is_reported(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            make_minimal_mod(root)
+            path = root / "Languages" / "German" / "DefInjected" / "FactionDef" / "KOR_Dynasty.xml"
+            path.write_text(
+                path.read_text(encoding="utf-8").replace(
+                    "<KOR_PlayerFaction.label>Kor Dynasty</KOR_PlayerFaction.label>", ""
+                ),
+                encoding="utf-8",
+            )
+            self.assertTrue(any(
+                "missing translation key 'KOR_PlayerFaction.label'" in error
+                for error in VALIDATOR.validate(root)
+            ))
 
     def test_missing_german_faction_translation_is_reported(self):
         with tempfile.TemporaryDirectory() as directory:
