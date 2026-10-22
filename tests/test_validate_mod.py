@@ -36,6 +36,10 @@ def make_minimal_mod(root: Path) -> None:
         <defName>KOR_Dynasty</defName><label>Kor Dynasty</label>
         <description>Test faction</description><pawnSingular>Kor</pawnSingular>
         <pawnsPlural>Kor</pawnsPlural><leaderTitle>Dynasty Speaker</leaderTitle>
+        <settlementGenerationWeight>0.75</settlementGenerationWeight>
+        <requiredCountAtGameStart>1</requiredCountAtGameStart>
+        <maxCountAtGameStart>2</maxCountAtGameStart>
+        <settlementTexturePath>World/WorldObjects/DefaultSettlement</settlementTexturePath>
         <colorSpectrum><li>(0.68, 0.08, 0.12)</li>
         <li>(0.10, 0.10, 0.12)</li><li>(0.78, 0.62, 0.25)</li></colorSpectrum>
         </FactionDef></Defs>""",
@@ -120,6 +124,29 @@ class ValidateModTests(unittest.TestCase):
                 encoding="utf-8",
             )
             self.assertTrue(any("missing required identity field <label>" in e for e in VALIDATOR.validate(root)))
+
+    def test_missing_world_presence_field_is_reported(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            make_minimal_mod(root)
+            path = root / "Defs" / "FactionDefs" / "KOR_Dynasty.xml"
+            content = path.read_text(encoding="utf-8").replace(
+                "<settlementGenerationWeight>0.75</settlementGenerationWeight>", ""
+            )
+            path.write_text(content, encoding="utf-8")
+            self.assertTrue(any("missing world-presence field <settlementGenerationWeight>" in e for e in VALIDATOR.validate(root)))
+
+    def test_invalid_world_generation_counts_are_reported(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            make_minimal_mod(root)
+            path = root / "Defs" / "FactionDefs" / "KOR_Dynasty.xml"
+            content = path.read_text(encoding="utf-8").replace(
+                "<maxCountAtGameStart>2</maxCountAtGameStart>",
+                "<maxCountAtGameStart>0</maxCountAtGameStart>",
+            )
+            path.write_text(content, encoding="utf-8")
+            self.assertTrue(any("maxCountAtGameStart must be at least requiredCountAtGameStart" in e for e in VALIDATOR.validate(root)))
 
     def test_missing_german_faction_translation_is_reported(self):
         with tempfile.TemporaryDirectory() as directory:
