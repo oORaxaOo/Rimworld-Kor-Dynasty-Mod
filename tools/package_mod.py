@@ -24,10 +24,13 @@ def package_mod(root: Path = ROOT, output: Path | None = None) -> Path:
     output = (output or (root / "dist" / "KOR-DYNASTIE-dev.zip")).resolve()
     metadata = root / "About" / "About.xml"
     faction = root / "Defs" / "FactionDefs" / "KOR_Dynasty.xml"
+    pawn_kind = root / "Defs" / "PawnKindDefs" / "KOR_PawnKinds.xml"
     if not metadata.is_file():
         raise FileNotFoundError("Required runtime file missing: About/About.xml")
     if not faction.is_file():
         raise FileNotFoundError("Required runtime file missing: Defs/FactionDefs/KOR_Dynasty.xml")
+    if not pawn_kind.is_file():
+        raise FileNotFoundError("Required runtime file missing: Defs/PawnKindDefs/KOR_PawnKinds.xml")
 
     files: list[tuple[Path, str]] = []
     for relative in RUNTIME_PATHS:
@@ -56,6 +59,8 @@ def package_mod(root: Path = ROOT, output: Path | None = None) -> Path:
             raise RuntimeError("Package verification failed: About metadata missing.")
         if f"{MOD_FOLDER_NAME}/Defs/FactionDefs/KOR_Dynasty.xml" not in names:
             raise RuntimeError("Package verification failed: Kor faction Def missing.")
+        if f"{MOD_FOLDER_NAME}/Defs/PawnKindDefs/KOR_PawnKinds.xml" not in names:
+            raise RuntimeError("Package verification failed: Kor pawn-kind Def missing.")
         unexpected = [
             name for name in names
             if not name.startswith(f"{MOD_FOLDER_NAME}/")

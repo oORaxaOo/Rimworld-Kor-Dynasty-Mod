@@ -58,6 +58,12 @@ def make_minimal_mod(root: Path) -> None:
         "KOR_Dynasty.leaderTitle": "Dynasty Speaker",
     }
     for language in ("English", "German"):
+        pawn_folder = root / "Languages" / language / "DefInjected" / "PawnKindDef"
+        pawn_folder.mkdir(parents=True)
+        (pawn_folder / "KOR_PawnKinds.xml").write_text(
+            "<LanguageData><KOR_Resident.label>Kor resident</KOR_Resident.label></LanguageData>",
+            encoding="utf-8",
+        )
         folder = root / "Languages" / language / "DefInjected" / "FactionDef"
         folder.mkdir(parents=True)
         body = "".join(f"<{key}>{value}</{key}>" for key, value in keys.items())
@@ -194,8 +200,19 @@ class PackageModTests(unittest.TestCase):
                 names = set(archive.namelist())
                 self.assertIn("KOR-DYNASTIE/About/About.xml", names)
                 self.assertIn("KOR-DYNASTIE/Defs/FactionDefs/KOR_Dynasty.xml", names)
+                self.assertIn("KOR-DYNASTIE/Defs/PawnKindDefs/KOR_PawnKinds.xml", names)
                 self.assertIn("KOR-DYNASTIE/Languages/German/DefInjected/FactionDef/KOR_Dynasty.xml", names)
                 self.assertFalse(any("README.md" in name or "secret-dev.txt" in name for name in names))
+
+    def test_package_fails_if_required_pawn_kind_file_is_missing(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "About").mkdir()
+            (root / "About" / "About.xml").write_text("<ModMetaData/>", encoding="utf-8")
+            (root / "Defs" / "FactionDefs").mkdir(parents=True)
+            (root / "Defs" / "FactionDefs" / "KOR_Dynasty.xml").write_text("<Defs/>", encoding="utf-8")
+            with self.assertRaisesRegex(FileNotFoundError, "KOR_PawnKinds.xml"):
+                PACKAGER.package_mod(root, root / "out.zip")
 
     def test_package_fails_if_required_faction_file_is_missing(self):
         with tempfile.TemporaryDirectory() as directory:
