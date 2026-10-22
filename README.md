@@ -22,7 +22,7 @@ RimWorld 1.7 was announced for the unstable beta branch on 12 October 2026. The 
 
 ## Repository status
 
-The mod has metadata, a Kor faction definition inheriting the vanilla OutlanderCivil baseline, English/German text, reproducible packaging, and static checks for XML, localization and world-generation settings. The first original pawn kind, `KOR_Resident`, is now defined and linked as the faction basic-member fallback. It has not yet been inserted into inherited visitor, trader or combat groups. This is **not yet a tested in-game release**; group composition, settlement/trade profiles, a playable colony start, art, diplomacy and strategic simulation remain future work.
+The mod has metadata, a Kor faction definition inheriting the vanilla OutlanderCivil baseline, English/German text, reproducible packaging, and static checks for XML, localization and world-generation settings. The first original pawn kind, `KOR_Resident`, is now defined and linked as the faction basic-member fallback. A separate player-faction definition and the first playable scenario now start four required Kor residents with modest basic supplies. The pawn kind has not yet been inserted into inherited visitor, trader or combat groups. This is **not yet a tested in-game release**; group composition, settlement/trade profiles, art, diplomacy and strategic simulation remain future work.
 
 ## Milestones
 
@@ -37,7 +37,7 @@ The mod has metadata, a Kor faction definition inheriting the vanilla OutlanderC
 - [ ] Add original faction icon and visual identity.
 - [x] Define the first Kor pawn kind and link it as the faction basic-member fallback.
 - [ ] Wire original Kor pawn kinds into faction groups without breaking inherited trade/visitor behavior.
-- [ ] Add a playable start scenario.
+- [x] Add a first playable Kor colony-start scenario with four required Kor residents and basic supplies.
 - [ ] Add distinct Kor settlement and trade profiles.
 - [ ] Add world events, diplomacy and persistent strategic goals.
 - [ ] Add optional DLC integrations, each isolated and tested independently.
