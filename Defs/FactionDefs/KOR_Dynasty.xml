@@ -1,10 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Defs>
-  <!--
-    Temporary vanilla faction baseline. The visual and social identity below
-    uses native FactionDef fields; original settlement/trade profiles remain
-    gated on a RimWorld runtime test.
-  -->
+  <!-- Temporary vanilla baseline; custom group composition awaits runtime validation. -->
   <FactionDef ParentName="OutlanderCivil">
     <defName>KOR_Dynasty</defName>
     <label>Kor Dynasty</label>
@@ -17,6 +13,7 @@
     <requiredCountAtGameStart>1</requiredCountAtGameStart>
     <maxCountAtGameStart>2</maxCountAtGameStart>
     <settlementTexturePath>World/WorldObjects/DefaultSettlement</settlementTexturePath>
+    <basicMemberKind>KOR_Resident</basicMemberKind>
     <colorSpectrum>
       <li>(0.68, 0.08, 0.12)</li>
       <li>(0.10, 0.10, 0.12)</li>

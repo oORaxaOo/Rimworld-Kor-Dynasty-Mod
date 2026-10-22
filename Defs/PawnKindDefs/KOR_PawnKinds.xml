@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Defs>
+  <!-- First original Kor pawn identity, based on the vanilla humanlike baseline. -->
+  <PawnKindDef ParentName="BaseOutlander">
+    <defName>KOR_Resident</defName>
+    <label>Kor resident</label>
+    <defaultFactionType>KOR_Dynasty</defaultFactionType>
+  </PawnKindDef>
+</Defs>

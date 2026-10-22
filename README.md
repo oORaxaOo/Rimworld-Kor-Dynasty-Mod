@@ -22,7 +22,7 @@ RimWorld 1.7 was announced for the unstable beta branch on 12 October 2026. The 
 
 ## Repository status
 
-The mod now has metadata, a Kor faction definition inheriting the vanilla OutlanderCivil baseline, English/German faction text, reproducible development packaging, and automated checks for XML, localization, and basic world-generation settings. The faction is configured to be eligible for world generation and uses the vanilla default settlement texture. This is **not yet a tested in-game release**. Original Kor pawn kinds, a distinct settlement/trade profile, the playable colony start, art, diplomacy and strategic simulation remain future work.
+The mod has metadata, a Kor faction definition inheriting the vanilla OutlanderCivil baseline, English/German text, reproducible packaging, and static checks for XML, localization and world-generation settings. The first original pawn kind, `KOR_Resident`, is now defined and linked as the faction basic-member fallback. It has not yet been inserted into inherited visitor, trader or combat groups. This is **not yet a tested in-game release**; group composition, settlement/trade profiles, a playable colony start, art, diplomacy and strategic simulation remain future work.
 
 ## Milestones
 
@@ -35,7 +35,7 @@ The mod now has metadata, a Kor faction definition inheriting the vanilla Outlan
 - [ ] Verify the faction in RimWorld 1.7.
 - [ ] Verify compatibility in RimWorld 1.6.
 - [ ] Add original faction icon and visual identity.
-- [ ] Add original Kor pawn kinds and wire them into faction groups.
+- [x] Define the first Kor pawn kind and link it as the faction basic-member fallback.\n- [ ] Wire original Kor pawn kinds into faction groups without breaking inherited trade/visitor behavior.
 - [ ] Add a playable start scenario.
 - [ ] Add distinct Kor settlement and trade profiles.
 - [ ] Add world events, diplomacy and persistent strategic goals.
@@ -50,7 +50,7 @@ Run with Python 3:
 python3 tools/validate_mod.py
 ```
 
-This checks XML well-formedness and basic metadata. It does **not** replace loading the mod in RimWorld. Runtime compatibility must be verified against the actual game build before release.
+This checks XML well-formedness, metadata, faction-to-pawn references and English/German text. It does **not** replace loading the mod in RimWorld. Runtime compatibility must be verified against the actual game build before release.
 
 ## Local testing
 
