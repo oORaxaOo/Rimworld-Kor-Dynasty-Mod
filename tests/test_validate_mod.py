@@ -1,15 +1,24 @@
-"""Regression tests for repository-level mod integration checks."""
+"""Regression tests for mod validation and clean package generation."""
 
 import importlib.util
 import tempfile
 import unittest
 from pathlib import Path
+from zipfile import ZipFile
 
-SCRIPT = Path(__file__).resolve().parents[1] / "tools" / "validate_mod.py"
-SPEC = importlib.util.spec_from_file_location("validate_mod", SCRIPT)
-VALIDATOR = importlib.util.module_from_spec(SPEC)
-assert SPEC.loader is not None
-SPEC.loader.exec_module(VALIDATOR)
+TOOLS = Path(__file__).resolve().parents[1] / "tools"
+
+
+def load_tool(name: str):
+    spec = importlib.util.spec_from_file_location(name, TOOLS / f"{name}.py")
+    module = importlib.util.module_from_spec(spec)
+    assert spec.loader is not None
+    spec.loader.exec_module(module)
+    return module
+
+
+VALIDATOR = load_tool("validate_mod")
+PACKAGER = load_tool("package_mod")
 
 
 def make_minimal_mod(root: Path) -> None:
@@ -42,9 +51,7 @@ class ValidateModTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             make_minimal_mod(root)
-            (root / "Defs" / "FactionDefs" / "KOR_Dynasty.xml").write_text(
-                "<Defs>", encoding="utf-8"
-            )
+            (root / "Defs" / "FactionDefs" / "KOR_Dynasty.xml").write_text("<Defs>", encoding="utf-8")
             errors = VALIDATOR.validate(root)
             self.assertTrue(any("invalid/unreadable XML" in error for error in errors))
 
@@ -52,68 +59,80 @@ class ValidateModTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             make_minimal_mod(root)
-            metadata = root / "About" / "About.xml"
-            metadata.write_text(
+            (root / "About" / "About.xml").write_text(
                 """<ModMetaData><name>KOR: DYNASTIE</name>
                 <packageId>oORaxaOo.KORDynastie</packageId>
-                <supportedVersions><li>1.6</li></supportedVersions>
-                </ModMetaData>""",
+                <supportedVersions><li>1.6</li></supportedVersions></ModMetaData>""",
                 encoding="utf-8",
             )
-            errors = VALIDATOR.validate(root)
-            self.assertTrue(any("missing supported version 1.7" in e for e in errors))
+            self.assertTrue(any("missing supported version 1.7" in e for e in VALIDATOR.validate(root)))
 
     def test_duplicate_def_names_are_reported_across_files(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             make_minimal_mod(root)
-            other = root / "Defs" / "FactionDefs" / "Duplicate.xml"
-            other.write_text(
-                """<Defs><FactionDef ParentName="OutlanderCivil">
-                <defName>KOR_Dynasty</defName></FactionDef></Defs>""",
-                encoding="utf-8",
+            (root / "Defs" / "FactionDefs" / "Duplicate.xml").write_text(
+                '<Defs><FactionDef><defName>KOR_Dynasty</defName></FactionDef></Defs>', encoding="utf-8"
             )
-            errors = VALIDATOR.validate(root)
-            self.assertTrue(any("Duplicate defName 'KOR_Dynasty'" in e for e in errors))
+            self.assertTrue(any("Duplicate defName 'KOR_Dynasty'" in e for e in VALIDATOR.validate(root)))
 
     def test_defs_file_requires_defs_root(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             make_minimal_mod(root)
             (root / "Defs" / "FactionDefs" / "BrokenRoot.xml").write_text(
-                "<FactionDef><defName>Broken</defName></FactionDef>",
-                encoding="utf-8",
+                "<FactionDef><defName>Broken</defName></FactionDef>", encoding="utf-8"
             )
-            errors = VALIDATOR.validate(root)
-            self.assertTrue(any("must have a <Defs> root" in e for e in errors))
+            self.assertTrue(any("must have a <Defs> root" in e for e in VALIDATOR.validate(root)))
 
     def test_duplicate_supported_versions_are_reported(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             make_minimal_mod(root)
-            metadata = root / "About" / "About.xml"
-            metadata.write_text(
+            (root / "About" / "About.xml").write_text(
                 """<ModMetaData><name>KOR: DYNASTIE</name>
                 <packageId>oORaxaOo.KORDynastie</packageId>
                 <supportedVersions><li>1.6</li><li>1.7</li><li>1.7</li></supportedVersions>
                 </ModMetaData>""",
                 encoding="utf-8",
             )
-            errors = VALIDATOR.validate(root)
-            self.assertTrue(any("duplicate supportedVersions" in e for e in errors))
+            self.assertTrue(any("duplicate supportedVersions" in e for e in VALIDATOR.validate(root)))
 
     def test_missing_faction_identity_field_is_reported(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             make_minimal_mod(root)
-            faction = root / "Defs" / "FactionDefs" / "KOR_Dynasty.xml"
-            faction.write_text(
-                """<Defs><FactionDef ParentName="OutlanderCivil">
-                <defName>KOR_Dynasty</defName></FactionDef></Defs>""",
+            (root / "Defs" / "FactionDefs" / "KOR_Dynasty.xml").write_text(
+                '<Defs><FactionDef ParentName="OutlanderCivil"><defName>KOR_Dynasty</defName></FactionDef></Defs>',
                 encoding="utf-8",
             )
-            errors = VALIDATOR.validate(root)
-            self.assertTrue(any("missing required identity field <label>" in e for e in errors))
+            self.assertTrue(any("missing required identity field <label>" in e for e in VALIDATOR.validate(root)))
+
+
+class PackageModTests(unittest.TestCase):
+    def test_package_contains_runtime_files_with_correct_root(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            make_minimal_mod(root)
+            (root / "README.md").write_text("dev documentation", encoding="utf-8")
+            (root / "tools").mkdir()
+            (root / "tools" / "secret-dev.txt").write_text("not a runtime file", encoding="utf-8")
+            output = root / "dist" / "test.zip"
+            result = PACKAGER.package_mod(root, output)
+            self.assertEqual(result, output.resolve())
+            with ZipFile(result) as archive:
+                names = set(archive.namelist())
+                self.assertIn("KOR-DYNASTIE/About/About.xml", names)
+                self.assertIn("KOR-DYNASTIE/Defs/FactionDefs/KOR_Dynasty.xml", names)
+                self.assertFalse(any("README.md" in name or "secret-dev.txt" in name for name in names))
+
+    def test_package_fails_if_required_faction_file_is_missing(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "About").mkdir()
+            (root / "About" / "About.xml").write_text("<ModMetaData/>", encoding="utf-8")
+            with self.assertRaises(FileNotFoundError):
+                PACKAGER.package_mod(root, root / "out.zip")
 
 
 if __name__ == "__main__":
