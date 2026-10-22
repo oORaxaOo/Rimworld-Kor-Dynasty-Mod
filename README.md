@@ -35,7 +35,7 @@ The mod has metadata, a Kor faction definition inheriting the vanilla OutlanderC
 - [ ] Verify the faction in RimWorld 1.7.
 - [ ] Verify compatibility in RimWorld 1.6.
 - [ ] Add original faction icon and visual identity.
-- [x] Define the first Kor pawn kind and link it as the faction basic-member - [x] Define the first Kor pawn kind and link it as the faction basic-member fallback.
+- [x] Define the first Kor pawn kind and link it as the faction basic-member fallback.
 - [ ] Wire original Kor pawn kinds into faction groups without breaking inherited trade/visitor behavior.
 - [ ] Add a playable start scenario.
 - [ ] Add distinct Kor settlement and trade profiles.

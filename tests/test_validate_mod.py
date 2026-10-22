@@ -76,6 +76,13 @@ class ValidateModTests(unittest.TestCase):
     def test_repository_passes_static_validation(self):
         self.assertEqual(VALIDATOR.validate(VALIDATOR.ROOT), [])
 
+    def test_readme_milestone_checklist_has_one_item_per_line(self):
+        readme = (VALIDATOR.ROOT / "README.md").read_text(encoding="utf-8")
+        for line_number, line in enumerate(readme.splitlines(), start=1):
+            if "- [ ]" in line or "- [x]" in line:
+                markers = line.count("- [ ]") + line.count("- [x]")
+                self.assertLessEqual(markers, 1, f"README.md:{line_number} has multiple checklist items on one line")
+
     def test_invalid_xml_is_reported(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
