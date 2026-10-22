@@ -23,7 +23,7 @@ REQUIRED_FACTION_TRANSLATIONS = {
     "KOR_Dynasty.pawnsPlural",
     "KOR_Dynasty.leaderTitle",
 }
-REQUIRED_LANGUAGES = {"English", "German"}
+REQUIRED_LANGUAGES = {"English", "German"}\nREQUIRED_PAWN_KIND = "KOR_Resident"
 REQUIRED_WORLD_PRESENCE_FIELDS = (
     "settlementGenerationWeight",
     "requiredCountAtGameStart",
@@ -90,6 +90,21 @@ def validate(root: Path = ROOT) -> list[str]:
         if len(versions) != len(set(versions)):
             errors.append("About/About.xml: duplicate supportedVersions entries.")
 
+    pawn_kind_path = root / "Defs" / "PawnKindDefs" / "KOR_PawnKinds.xml"
+    pawn_kind_root = parsed_roots.get(pawn_kind_path)
+    pawn_kind = pawn_kind_root.find("./PawnKindDef") if pawn_kind_root is not None else None
+    if pawn_kind is None:
+        errors.append("Missing or invalid Defs/PawnKindDefs/KOR_PawnKinds.xml or PawnKindDef.")
+    else:
+        if pawn_kind.findtext("defName") != REQUIRED_PAWN_KIND:
+            errors.append(f"KOR_PawnKinds.xml: expected defName {REQUIRED_PAWN_KIND}.")
+        if pawn_kind.get("ParentName") != "BaseOutlander":
+            errors.append("KOR_PawnKinds.xml: KOR_Resident must retain the BaseOutlander baseline.")
+        if pawn_kind.findtext("defaultFactionType") != "KOR_Dynasty":
+            errors.append("KOR_PawnKinds.xml: KOR_Resident must default to KOR_Dynasty.")
+        if not (pawn_kind.findtext("label") or "").strip():
+            errors.append("KOR_PawnKinds.xml: KOR_Resident is missing its label.")
+
     faction_path = root / "Defs" / "FactionDefs" / "KOR_Dynasty.xml"
     faction_root = parsed_roots.get(faction_path)
     if faction_root is None:
@@ -113,6 +128,9 @@ def validate(root: Path = ROOT) -> list[str]:
                 errors.append("KOR_Dynasty.xml: colorSpectrum must define at least one faction color.")
             elif len(colors) < 3:
                 errors.append("KOR_Dynasty.xml: Kor palette should include red, charcoal, and gold entries.")
+
+            if faction.findtext("basicMemberKind") != REQUIRED_PAWN_KIND:
+                errors.append("KOR_Dynasty.xml: basicMemberKind must reference KOR_Resident.")
 
             for tag in REQUIRED_WORLD_PRESENCE_FIELDS:
                 if not (faction.findtext(tag) or "").strip():
@@ -157,6 +175,16 @@ def validate(root: Path = ROOT) -> list[str]:
                 errors.append(f"{relative}: translation {key!r} must not be empty.")
         for required_key in sorted(REQUIRED_FACTION_TRANSLATIONS - translated_keys):
             errors.append(f"{relative}: missing translation key {required_key!r}.")
+
+        pawn_translation_path = root / "Languages" / language / "DefInjected" / "PawnKindDef" / "KOR_PawnKinds.xml"
+        pawn_translation_root = parsed_roots.get(pawn_translation_path)
+        relative_pawn = pawn_translation_path.relative_to(root).as_posix()
+        if pawn_translation_root is None:
+            errors.append(f"Missing or invalid pawn-kind translations: {relative_pawn}.")
+        elif pawn_translation_root.tag != "LanguageData":
+            errors.append(f"{relative_pawn}: translation file must have a <LanguageData> root.")
+        elif not (pawn_translation_root.findtext("KOR_Resident.label") or "").strip():
+            errors.append(f"{relative_pawn}: missing or empty translation KOR_Resident.label.")
 
     return errors
 

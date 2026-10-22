@@ -31,6 +31,11 @@ def make_minimal_mod(root: Path) -> None:
         </ModMetaData>""",
         encoding="utf-8",
     )
+    (root / "Defs" / "PawnKindDefs").mkdir(parents=True)
+    (root / "Defs" / "PawnKindDefs" / "KOR_PawnKinds.xml").write_text(
+        '<Defs><PawnKindDef ParentName="BaseOutlander"><defName>KOR_Resident</defName><label>Kor resident</label><defaultFactionType>KOR_Dynasty</defaultFactionType></PawnKindDef></Defs>',
+        encoding="utf-8",
+    )
     (root / "Defs" / "FactionDefs" / "KOR_Dynasty.xml").write_text(
         """<Defs><FactionDef ParentName="OutlanderCivil">
         <defName>KOR_Dynasty</defName><label>Kor Dynasty</label>
@@ -39,7 +44,7 @@ def make_minimal_mod(root: Path) -> None:
         <settlementGenerationWeight>0.75</settlementGenerationWeight>
         <requiredCountAtGameStart>1</requiredCountAtGameStart>
         <maxCountAtGameStart>2</maxCountAtGameStart>
-        <settlementTexturePath>World/WorldObjects/DefaultSettlement</settlementTexturePath>
+        <settlementTexturePath>World/WorldObjects/DefaultSettlement</settlementTexturePath>\n        <basicMemberKind>KOR_Resident</basicMemberKind>
         <colorSpectrum><li>(0.68, 0.08, 0.12)</li>
         <li>(0.10, 0.10, 0.12)</li><li>(0.78, 0.62, 0.25)</li></colorSpectrum>
         </FactionDef></Defs>""",
@@ -147,6 +152,16 @@ class ValidateModTests(unittest.TestCase):
             )
             path.write_text(content, encoding="utf-8")
             self.assertTrue(any("maxCountAtGameStart must be at least requiredCountAtGameStart" in e for e in VALIDATOR.validate(root)))
+
+    def test_missing_kor_pawn_kind_reference_is_reported(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            make_minimal_mod(root)
+            path = root / "Defs" / "FactionDefs" / "KOR_Dynasty.xml"
+            path.write_text(path.read_text(encoding="utf-8").replace(
+                "<basicMemberKind>KOR_Resident</basicMemberKind>", ""
+            ), encoding="utf-8")
+            self.assertTrue(any("basicMemberKind must reference KOR_Resident" in e for e in VALIDATOR.validate(root)))
 
     def test_missing_german_faction_translation_is_reported(self):
         with tempfile.TemporaryDirectory() as directory:
