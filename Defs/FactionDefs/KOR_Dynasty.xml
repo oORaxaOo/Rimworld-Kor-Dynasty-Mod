@@ -1,14 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Defs>
   <!--
-    Bootstrap definition: inherit a vanilla civil faction as a temporary
-    compatibility baseline. Replace inherited settlement, trade and pawn
-    group data with original Kor definitions only after runtime testing.
+    Temporary vanilla faction baseline. The visual and social identity below
+    uses native FactionDef fields; original settlement/trade profiles remain
+    gated on a RimWorld runtime test.
   -->
   <FactionDef ParentName="OutlanderCivil">
     <defName>KOR_Dynasty</defName>
     <label>Kor Dynasty</label>
     <description>The Kor Dynasty is a resilient society built around mutual aid, responsibility, and the long-term wellbeing of its community.</description>
+    <pawnsPlural>Kor</pawnsPlural>
+    <pawnSingular>Kor</pawnSingular>
+    <leaderTitle>Dynasty Speaker</leaderTitle>
     <techLevel>Spacer</techLevel>
+    <colorSpectrum>
+      <li>(0.68, 0.08, 0.12)</li>
+      <li>(0.10, 0.10, 0.12)</li>
+      <li>(0.78, 0.62, 0.25)</li>
+    </colorSpectrum>
   </FactionDef>
 </Defs>
