@@ -47,9 +47,33 @@ def make_minimal_mod(root: Path) -> None:
         <settlementTexturePath>World/WorldObjects/DefaultSettlement</settlementTexturePath>\n        <basicMemberKind>KOR_Resident</basicMemberKind>
         <colorSpectrum><li>(0.68, 0.08, 0.12)</li>
         <li>(0.10, 0.10, 0.12)</li><li>(0.78, 0.62, 0.25)</li></colorSpectrum>
-        </FactionDef></Defs>""",
+        </FactionDef><FactionDef ParentName="PlayerFactionBase"><defName>KOR_PlayerFaction</defName>
+        <label>Kor Dynasty</label><description>Test player faction</description><basicMemberKind>KOR_Resident</basicMemberKind></FactionDef></Defs>""",
         encoding="utf-8",
     )
+    (root / "Defs" / "ScenarioDefs").mkdir(parents=True)
+    (root / "Defs" / "ScenarioDefs" / "KOR_ColonyStart.xml").write_text(
+        """<Defs><ScenarioDef ParentName="ScenarioBase"><defName>KOR_ColonyStart</defName>
+        <label>The Kor Founding</label><description>Test start</description>
+        <scenario><playerFaction><def>PlayerFaction</def><factionDef>KOR_PlayerFaction</factionDef></playerFaction>
+        <parts><li Class="ScenPart_ConfigPage_ConfigureStartingPawns_KindDefs"><def>ConfigurePawnsKindDefs</def>
+        <pawnChoiceCount>4</pawnChoiceCount><kindCounts><li><kindDef>KOR_Resident</kindDef><count>4</count>
+        <requiredAtStart>true</requiredAtStart></li></kindCounts></li></parts></scenario></ScenarioDef></Defs>""",
+        encoding="utf-8",
+    )
+    for language in ("English", "German"):
+        folder = root / "Languages" / language / "DefInjected" / "ScenarioDef"
+        folder.mkdir(parents=True)
+        (folder / "KOR_ColonyStart.xml").write_text(
+            """<LanguageData><KOR_ColonyStart.label>The Kor Founding</KOR_ColonyStart.label>
+            <KOR_ColonyStart.description>Test start</KOR_ColonyStart.description>
+            <KOR_ColonyStart.scenario.name>The Kor Founding</KOR_ColonyStart.scenario.name>
+            <KOR_ColonyStart.scenario.summary>Test summary</KOR_ColonyStart.scenario.summary>
+            <KOR_ColonyStart.scenario.description>Test start</KOR_ColonyStart.scenario.description></LanguageData>""",
+            encoding="utf-8",
+        )
+
+
     keys = {
         "KOR_Dynasty.label": "Kor Dynasty",
         "KOR_Dynasty.description": "Test faction description",
@@ -208,6 +232,8 @@ class PackageModTests(unittest.TestCase):
                 self.assertIn("KOR-DYNASTIE/About/About.xml", names)
                 self.assertIn("KOR-DYNASTIE/Defs/FactionDefs/KOR_Dynasty.xml", names)
                 self.assertIn("KOR-DYNASTIE/Defs/PawnKindDefs/KOR_PawnKinds.xml", names)
+                self.assertIn("KOR-DYNASTIE/Defs/ScenarioDefs/KOR_ColonyStart.xml", names)
+                self.assertIn("KOR-DYNASTIE/Languages/German/DefInjected/ScenarioDef/KOR_ColonyStart.xml", names)
                 self.assertIn("KOR-DYNASTIE/Languages/German/DefInjected/FactionDef/KOR_Dynasty.xml", names)
                 self.assertFalse(any("README.md" in name or "secret-dev.txt" in name for name in names))
 

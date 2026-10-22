@@ -25,6 +25,14 @@ REQUIRED_FACTION_TRANSLATIONS = {
 }
 REQUIRED_LANGUAGES = {"English", "German"}
 REQUIRED_PAWN_KIND = "KOR_Resident"
+REQUIRED_SCENARIO = "KOR_ColonyStart"
+REQUIRED_SCENARIO_TRANSLATIONS = {
+    "KOR_ColonyStart.label",
+    "KOR_ColonyStart.description",
+    "KOR_ColonyStart.scenario.name",
+    "KOR_ColonyStart.scenario.summary",
+    "KOR_ColonyStart.scenario.description",
+}
 REQUIRED_WORLD_PRESENCE_FIELDS = (
     "settlementGenerationWeight",
     "requiredCountAtGameStart",
@@ -154,6 +162,49 @@ def validate(root: Path = ROOT) -> list[str]:
             except ValueError:
                 errors.append("KOR_Dynasty.xml: game-start faction counts must be integers.")
 
+    player_faction = None
+    if faction_root is not None:
+        player_faction = faction_root.find("./FactionDef[defName='KOR_PlayerFaction']")
+    if player_faction is None:
+        errors.append("KOR_Dynasty.xml: missing KOR_PlayerFaction definition for the playable scenario.")
+    else:
+        if player_faction.get("ParentName") != "PlayerFactionBase":
+            errors.append("KOR_Dynasty.xml: KOR_PlayerFaction must inherit PlayerFactionBase.")
+        if player_faction.findtext("basicMemberKind") != REQUIRED_PAWN_KIND:
+            errors.append("KOR_Dynasty.xml: KOR_PlayerFaction basicMemberKind must reference KOR_Resident.")
+
+    scenario_path = root / "Defs" / "ScenarioDefs" / "KOR_ColonyStart.xml"
+    scenario_root = parsed_roots.get(scenario_path)
+    scenario = scenario_root.find("./ScenarioDef") if scenario_root is not None else None
+    if scenario is None:
+        errors.append("Missing or invalid Defs/ScenarioDefs/KOR_ColonyStart.xml or ScenarioDef.")
+    else:
+        if scenario.get("ParentName") != "ScenarioBase":
+            errors.append("KOR_ColonyStart.xml: scenario must inherit ScenarioBase.")
+        if scenario.findtext("defName") != REQUIRED_SCENARIO:
+            errors.append(f"KOR_ColonyStart.xml: expected defName {REQUIRED_SCENARIO}.")
+        if not (scenario.findtext("label") or "").strip() or not (scenario.findtext("description") or "").strip():
+            errors.append("KOR_ColonyStart.xml: label and description are required.")
+        if scenario.findtext("./scenario/playerFaction/factionDef") != "KOR_PlayerFaction":
+            errors.append("KOR_ColonyStart.xml: playerFaction must reference KOR_PlayerFaction.")
+        pawn_parts = scenario.findall("./scenario/parts/li[@Class='ScenPart_ConfigPage_ConfigureStartingPawns_KindDefs']")
+        kor_start_count = 0
+        required_start = False
+        for part in pawn_parts:
+            for entry in part.findall("./kindCounts/li"):
+                if entry.findtext("kindDef") == REQUIRED_PAWN_KIND:
+                    try:
+                        kor_start_count += int(entry.findtext("count") or "0")
+                    except ValueError:
+                        errors.append("KOR_ColonyStart.xml: KOR_Resident starting count must be an integer.")
+                    required_start = required_start or (entry.findtext("requiredAtStart") == "true")
+        if kor_start_count != 4:
+            errors.append("KOR_ColonyStart.xml: starting roster must require exactly four KOR_Resident pawns.")
+        if not required_start:
+            errors.append("KOR_ColonyStart.xml: KOR_Resident must be required at start.")
+        if not pawn_parts or any(not part.findall("./kindCounts/li") for part in pawn_parts):
+            errors.append("KOR_ColonyStart.xml: starting pawn configuration must contain kindCounts.")
+
     for language in sorted(REQUIRED_LANGUAGES):
         translation_path = (
             root / "Languages" / language / "DefInjected" / "FactionDef" / "KOR_Dynasty.xml"
@@ -176,6 +227,24 @@ def validate(root: Path = ROOT) -> list[str]:
                 errors.append(f"{relative}: translation {key!r} must not be empty.")
         for required_key in sorted(REQUIRED_FACTION_TRANSLATIONS - translated_keys):
             errors.append(f"{relative}: missing translation key {required_key!r}.")
+
+        scenario_translation_path = root / "Languages" / language / "DefInjected" / "ScenarioDef" / "KOR_ColonyStart.xml"
+        scenario_translation_root = parsed_roots.get(scenario_translation_path)
+        relative_scenario = scenario_translation_path.relative_to(root).as_posix()
+        if scenario_translation_root is None:
+            errors.append(f"Missing or invalid scenario translations: {relative_scenario}.")
+        elif scenario_translation_root.tag != "LanguageData":
+            errors.append(f"{relative_scenario}: translation file must have a <LanguageData> root.")
+        else:
+            scenario_keys: set[str] = set()
+            for node in list(scenario_translation_root):
+                if node.tag in scenario_keys:
+                    errors.append(f"{relative_scenario}: duplicate translation key {node.tag!r}.")
+                scenario_keys.add(node.tag)
+                if not (node.text or "").strip():
+                    errors.append(f"{relative_scenario}: translation {node.tag!r} must not be empty.")
+            for required_key in sorted(REQUIRED_SCENARIO_TRANSLATIONS - scenario_keys):
+                errors.append(f"{relative_scenario}: missing translation key {required_key!r}.")
 
         pawn_translation_path = root / "Languages" / language / "DefInjected" / "PawnKindDef" / "KOR_PawnKinds.xml"
         pawn_translation_root = parsed_roots.get(pawn_translation_path)

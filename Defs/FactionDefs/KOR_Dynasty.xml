@@ -20,4 +20,16 @@
       <li>(0.78, 0.62, 0.25)</li>
     </colorSpectrum>
   </FactionDef>
+  <FactionDef ParentName="PlayerFactionBase">
+    <defName>KOR_PlayerFaction</defName>
+    <label>Kor Dynasty</label>
+    <description>A Kor community establishing a new home on the rim.</description>
+    <techLevel>Spacer</techLevel>
+    <basicMemberKind>KOR_Resident</basicMemberKind>
+    <colorSpectrum>
+      <li>(0.68, 0.08, 0.12)</li>
+      <li>(0.10, 0.10, 0.12)</li>
+      <li>(0.78, 0.62, 0.25)</li>
+    </colorSpectrum>
+  </FactionDef>
 </Defs>
