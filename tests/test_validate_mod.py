@@ -47,7 +47,8 @@ def make_minimal_mod(root: Path) -> None:
         <settlementTexturePath>World/WorldObjects/DefaultSettlement</settlementTexturePath>\n        <basicMemberKind>KOR_Resident</basicMemberKind>
         <colorSpectrum><li>(0.68, 0.08, 0.12)</li>
         <li>(0.10, 0.10, 0.12)</li><li>(0.78, 0.62, 0.25)</li></colorSpectrum>
-        </FactionDef></Defs>""",
+        </FactionDef><FactionDef ParentName="PlayerFactionBase"><defName>KOR_PlayerFaction</defName>
+        <label>Kor Dynasty</label><description>Test player faction</description><basicMemberKind>KOR_Resident</basicMemberKind></FactionDef></Defs>""",
         encoding="utf-8",
     )
     keys = {
