@@ -74,6 +74,14 @@ def package_mod(root: Path = ROOT, output: Path | None = None) -> Path:
                 raise RuntimeError(
                     f"Package verification failed: {language} Kor scenario translations missing."
                 )
+        for language in ("English", "German"):
+            translation_path = (
+                f"{MOD_FOLDER_NAME}/Languages/{language}/DefInjected/FactionDef/KOR_Dynasty.xml"
+            )
+            if translation_path not in names:
+                raise RuntimeError(
+                    f"Package verification failed: {language} Kor faction translations missing."
+                )
         unexpected = [
             name for name in names
             if not name.startswith(f"{MOD_FOLDER_NAME}/")
