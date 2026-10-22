@@ -1,11 +1,21 @@
 #!/usr/bin/env python3
-"""Static XML and metadata checks for the KOR: DYNASTIE mod scaffold."""
+"""Static integration checks for KOR: DYNASTIE XML and mod metadata.
 
+These checks catch repository-level integration mistakes. They do not replace
+loading the mod in the target RimWorld build.
+"""
+
+from collections import defaultdict
 from pathlib import Path
 import sys
 import xml.etree.ElementTree as ET
 
 ROOT = Path(__file__).resolve().parents[1]
+SUPPORTED_VERSIONS = {"1.6", "1.7"}
+EXPECTED_METADATA = {
+    "name": "KOR: DYNASTIE",
+    "packageId": "oORaxaOo.KORDynastie",
+}
 
 
 def validate(root: Path = ROOT) -> list[str]:
@@ -14,60 +24,81 @@ def validate(root: Path = ROOT) -> list[str]:
     if not xml_files:
         errors.append("No XML files found.")
 
+    parsed_roots: dict[Path, ET.Element] = {}
+    def_locations: dict[str, list[str]] = defaultdict(list)
+
     for path in xml_files:
+        relative = path.relative_to(root).as_posix()
         try:
-            ET.parse(path)
-        except ET.ParseError as exc:
-            errors.append(f"{path.relative_to(root)}: invalid XML: {exc}")
+            xml_root = ET.parse(path).getroot()
+            parsed_roots[path] = xml_root
+        except (ET.ParseError, OSError) as exc:
+            errors.append(f"{relative}: invalid/unreadable XML: {exc}")
+            continue
+
+        if "Defs" in path.relative_to(root).parts and xml_root.tag != "Defs":
+            errors.append(f"{relative}: files under Defs/ must have a <Defs> root.")
+
+        if xml_root.tag == "Defs":
+            for definition in list(xml_root):
+                def_name = definition.findtext("defName")
+                if def_name:
+                    def_locations[def_name.strip()].append(relative)
+
+    for def_name, locations in sorted(def_locations.items()):
+        if len(locations) > 1:
+            errors.append(
+                f"Duplicate defName {def_name!r} found in: {', '.join(locations)}"
+            )
 
     metadata_path = root / "About" / "About.xml"
-    if metadata_path.exists():
-        try:
-            metadata = ET.parse(metadata_path).getroot()
-            expected = {
-                "name": "KOR: DYNASTIE",
-                "packageId": "oORaxaOo.KORDynastie",
-            }
-            for tag, value in expected.items():
-                actual = metadata.findtext(tag)
-                if actual != value:
-                    errors.append(
-                        f"About/About.xml: expected <{tag}>{value}</{tag}>, got {actual!r}"
-                    )
-            versions = {node.text for node in metadata.findall("./supportedVersions/li")}
-            for version in ("1.6", "1.7"):
-                if version not in versions:
-                    errors.append(f"About/About.xml: missing supported version {version}")
-            for version in versions:
-                if version and version not in {"1.6", "1.7"}:
-                    errors.append(
-                        f"About/About.xml: unsupported legacy/unplanned version {version}"
-                    )
-        except ET.ParseError:
-            # The XML parser already emitted the detailed parse error above.
-            pass
+    metadata = parsed_roots.get(metadata_path)
+    if metadata is None:
+        errors.append("Missing or invalid About/About.xml.")
     else:
-        errors.append("Missing About/About.xml.")
+        for tag, expected in EXPECTED_METADATA.items():
+            actual = metadata.findtext(tag)
+            if actual != expected:
+                errors.append(
+                    f"About/About.xml: expected <{tag}>{expected}</{tag}>, got {actual!r}"
+                )
+
+        version_nodes = metadata.findall("./supportedVersions/li")
+        versions = [node.text.strip() for node in version_nodes if node.text and node.text.strip()]
+        for required in sorted(SUPPORTED_VERSIONS):
+            if required not in versions:
+                errors.append(f"About/About.xml: missing supported version {required}")
+        for version in versions:
+            if version not in SUPPORTED_VERSIONS:
+                errors.append(
+                    f"About/About.xml: unsupported legacy/unplanned version {version}"
+                )
+        if len(versions) != len(set(versions)):
+            errors.append("About/About.xml: duplicate supportedVersions entries.")
 
     faction_path = root / "Defs" / "FactionDefs" / "KOR_Dynasty.xml"
-    if faction_path.exists():
-        try:
-            faction_root = ET.parse(faction_path).getroot()
-            faction = faction_root.find("./FactionDef")
-            if faction is None:
-                errors.append("KOR_Dynasty.xml: missing FactionDef.")
-            else:
-                if faction.findtext("defName") != "KOR_Dynasty":
-                    errors.append("KOR_Dynasty.xml: faction defName must be KOR_Dynasty.")
-                if not faction.get("ParentName"):
-                    errors.append(
-                        "KOR_Dynasty.xml: faction must inherit a known template until a full definition exists."
-                    )
-        except ET.ParseError:
-            # The XML parser already emitted the detailed parse error above.
-            pass
+    faction_root = parsed_roots.get(faction_path)
+    if faction_root is None:
+        errors.append("Missing or invalid Defs/FactionDefs/KOR_Dynasty.xml.")
     else:
-        errors.append("Missing Defs/FactionDefs/KOR_Dynasty.xml.")
+        faction = faction_root.find("./FactionDef")
+        if faction is None:
+            errors.append("KOR_Dynasty.xml: missing FactionDef.")
+        else:
+            if faction.findtext("defName") != "KOR_Dynasty":
+                errors.append("KOR_Dynasty.xml: faction defName must be KOR_Dynasty.")
+            if not faction.get("ParentName"):
+                errors.append(
+                    "KOR_Dynasty.xml: faction must inherit a known template until a full definition exists."
+                )
+            for tag in ("label", "description", "pawnSingular", "pawnsPlural", "leaderTitle"):
+                if not (faction.findtext(tag) or "").strip():
+                    errors.append(f"KOR_Dynasty.xml: missing required identity field <{tag}>.")
+            colors = faction.findall("./colorSpectrum/li")
+            if not colors:
+                errors.append("KOR_Dynasty.xml: colorSpectrum must define at least one faction color.")
+            elif len(colors) < 3:
+                errors.append("KOR_Dynasty.xml: Kor palette should include red, charcoal, and gold entries.")
 
     return errors
 
@@ -82,6 +113,7 @@ def main() -> int:
 
     xml_count = len(list(ROOT.rglob("*.xml")))
     print(f"KOR: DYNASTIE validation passed ({xml_count} XML files parsed).")
+    print("Duplicate DefNames, Defs roots, faction identity, and palette checked.")
     print("Note: static validation does not test RimWorld runtime compatibility.")
     return 0
 
