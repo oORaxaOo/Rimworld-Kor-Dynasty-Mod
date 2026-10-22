@@ -23,7 +23,8 @@ REQUIRED_FACTION_TRANSLATIONS = {
     "KOR_Dynasty.pawnsPlural",
     "KOR_Dynasty.leaderTitle",
 }
-REQUIRED_LANGUAGES = {"English", "German"}\nREQUIRED_PAWN_KIND = "KOR_Resident"
+REQUIRED_LANGUAGES = {"English", "German"}
+REQUIRED_PAWN_KIND = "KOR_Resident"
 REQUIRED_WORLD_PRESENCE_FIELDS = (
     "settlementGenerationWeight",
     "requiredCountAtGameStart",
