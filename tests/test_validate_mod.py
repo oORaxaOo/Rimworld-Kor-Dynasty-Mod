@@ -41,6 +41,20 @@ def make_minimal_mod(root: Path) -> None:
         </FactionDef></Defs>""",
         encoding="utf-8",
     )
+    keys = {
+        "KOR_Dynasty.label": "Kor Dynasty",
+        "KOR_Dynasty.description": "Test faction description",
+        "KOR_Dynasty.pawnSingular": "Kor",
+        "KOR_Dynasty.pawnsPlural": "Kor",
+        "KOR_Dynasty.leaderTitle": "Dynasty Speaker",
+    }
+    for language in ("English", "German"):
+        folder = root / "Languages" / language / "DefInjected" / "FactionDef"
+        folder.mkdir(parents=True)
+        body = "".join(f"<{key}>{value}</{key}>" for key, value in keys.items())
+        (folder / "KOR_Dynasty.xml").write_text(
+            f"<LanguageData>{body}</LanguageData>", encoding="utf-8"
+        )
 
 
 class ValidateModTests(unittest.TestCase):
@@ -91,9 +105,8 @@ class ValidateModTests(unittest.TestCase):
             make_minimal_mod(root)
             (root / "About" / "About.xml").write_text(
                 """<ModMetaData><name>KOR: DYNASTIE</name>
-                <packageId>oORaxaOo.KORDynastie</packageId>
-                <supportedVersions><li>1.6</li><li>1.7</li><li>1.7</li></supportedVersions>
-                </ModMetaData>""",
+                <packageId>oORaxaOo.KORDynastie</packageId><supportedVersions>
+                <li>1.6</li><li>1.7</li><li>1.7</li></supportedVersions></ModMetaData>""",
                 encoding="utf-8",
             )
             self.assertTrue(any("duplicate supportedVersions" in e for e in VALIDATOR.validate(root)))
@@ -107,6 +120,21 @@ class ValidateModTests(unittest.TestCase):
                 encoding="utf-8",
             )
             self.assertTrue(any("missing required identity field <label>" in e for e in VALIDATOR.validate(root)))
+
+    def test_missing_german_faction_translation_is_reported(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            make_minimal_mod(root)
+            (root / "Languages" / "German" / "DefInjected" / "FactionDef" / "KOR_Dynasty.xml").unlink()
+            self.assertTrue(any("Missing or invalid faction translations" in e for e in VALIDATOR.validate(root)))
+
+    def test_empty_translation_is_reported(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            make_minimal_mod(root)
+            path = root / "Languages" / "English" / "DefInjected" / "FactionDef" / "KOR_Dynasty.xml"
+            path.write_text("<LanguageData><KOR_Dynasty.label> </KOR_Dynasty.label></LanguageData>", encoding="utf-8")
+            self.assertTrue(any("must not be empty" in e for e in VALIDATOR.validate(root)))
 
 
 class PackageModTests(unittest.TestCase):
@@ -124,6 +152,7 @@ class PackageModTests(unittest.TestCase):
                 names = set(archive.namelist())
                 self.assertIn("KOR-DYNASTIE/About/About.xml", names)
                 self.assertIn("KOR-DYNASTIE/Defs/FactionDefs/KOR_Dynasty.xml", names)
+                self.assertIn("KOR-DYNASTIE/Languages/German/DefInjected/FactionDef/KOR_Dynasty.xml", names)
                 self.assertFalse(any("README.md" in name or "secret-dev.txt" in name for name in names))
 
     def test_package_fails_if_required_faction_file_is_missing(self):
