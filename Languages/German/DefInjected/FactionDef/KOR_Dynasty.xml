@@ -5,4 +5,6 @@
   <KOR_Dynasty.pawnSingular>Kor</KOR_Dynasty.pawnSingular>
   <KOR_Dynasty.pawnsPlural>Kor</KOR_Dynasty.pawnsPlural>
   <KOR_Dynasty.leaderTitle>Stimme der Dynastie</KOR_Dynasty.leaderTitle>
+  <KOR_PlayerFaction.label>Kor-Dynastie</KOR_PlayerFaction.label>
+  <KOR_PlayerFaction.description>Eine Kor-Gemeinschaft, die auf dem Rand einen neuen Ort zum Leben aufbaut.</KOR_PlayerFaction.description>
 </LanguageData>

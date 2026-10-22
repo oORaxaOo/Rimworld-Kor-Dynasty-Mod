@@ -22,6 +22,8 @@ REQUIRED_FACTION_TRANSLATIONS = {
     "KOR_Dynasty.pawnSingular",
     "KOR_Dynasty.pawnsPlural",
     "KOR_Dynasty.leaderTitle",
+    "KOR_PlayerFaction.label",
+    "KOR_PlayerFaction.description",
 }
 REQUIRED_LANGUAGES = {"English", "German"}
 REQUIRED_PAWN_KIND = "KOR_Resident"
