@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Defs>
+  <!--
+    Bootstrap definition: inherit a vanilla civil faction as a temporary
+    compatibility baseline. Replace inherited settlement, trade and pawn
+    group data with original Kor definitions only after runtime testing.
+  -->
+  <FactionDef ParentName="OutlanderCivil">
+    <defName>KOR_Dynasty</defName>
+    <label>Kor Dynasty</label>
+    <description>The Kor Dynasty is a resilient society built around mutual aid, responsibility, and the long-term wellbeing of its community.</description>
+    <techLevel>Spacer</techLevel>
+  </FactionDef>
+</Defs>
